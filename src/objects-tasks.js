@@ -363,32 +363,69 @@ function group(array, keySelector, valueSelector) {
  */
 
 const cssSelectorBuilder = {
-  element(/* value */) {
-    throw new Error('Not implemented');
+  out: '',
+  prev: null,
+  help(val, prop) {
+    const temp = {};
+    const ex1 = ['element', 'id', 'pseudo-element'];
+    const ex2 = [
+      'element',
+      'id',
+      'class',
+      'attribute',
+      'pseudo-class',
+      'pseudo-element',
+    ];
+    Object.assign(temp, this);
+
+    if (ex1.includes(prop) && temp.prev === prop)
+      throw new Error(
+        'Element, id and pseudo-element should not occur more then one time inside the selector'
+      );
+
+    if (temp.prev && ex2.indexOf(prop) < ex2.indexOf(temp.prev)) {
+      throw new Error(
+        'Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element'
+      );
+    }
+
+    temp.prev = prop;
+    temp.out += val;
+    return temp;
+  },
+  element(value) {
+    return this.help(value, 'element');
   },
 
-  id(/* value */) {
-    throw new Error('Not implemented');
+  id(value) {
+    return this.help(`#${value}`, 'id');
   },
 
-  class(/* value */) {
-    throw new Error('Not implemented');
+  class(value) {
+    return this.help(`.${value}`, 'class');
   },
 
-  attr(/* value */) {
-    throw new Error('Not implemented');
+  attr(value) {
+    return this.help(`[${value}]`, 'attribute');
   },
 
-  pseudoClass(/* value */) {
-    throw new Error('Not implemented');
+  pseudoClass(value) {
+    return this.help(`:${value}`, 'pseudo-class');
   },
 
-  pseudoElement(/* value */) {
-    throw new Error('Not implemented');
+  pseudoElement(value) {
+    return this.help(`::${value}`, 'pseudo-element');
   },
 
-  combine(/* selector1, combinator, selector2 */) {
-    throw new Error('Not implemented');
+  combine(selector1, combinator, selector2) {
+    const temp = {};
+    Object.assign(temp, this);
+    temp.out = `${selector1.out} ${combinator} ${selector2.out}`;
+    return temp;
+  },
+
+  stringify() {
+    return this.out;
   },
 };
 
